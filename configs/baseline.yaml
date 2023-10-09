@@ -1,0 +1,11 @@
+# DATA
+root_dir: "./data"
+data_path: "./data/annotations/phase1/train/train.csv"
+train_batch_size: 32
+test_batch_size: 64
+
+# Training
+learning_rate: 0.0001
+num_epochs: 20
+
+seed: 42
