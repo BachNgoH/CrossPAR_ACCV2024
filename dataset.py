@@ -1,10 +1,10 @@
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
-import pandas as pd
 import os
 import torch
 from torchvision import transforms as T
-
+import scipy.io 
+from PIL import Image
 
 class ChalearnDataset(Dataset):
     def __init__(self, data_df, root_dir, transforms):
@@ -38,10 +38,32 @@ class ChalearnInferDataset(Dataset):
         image = self.transforms(image)
         return image
 
+class PA100KDataset(Dataset):
+    def __init__(self, root_dir, transforms, split):
+        self.annotations = scipy.io.loadmat("./data/PA-100K/annotation/annotation.mat")
+        self.file_paths = self.annotations[f"{split}_images_name"]
+        self.labels = self.annotations[f"{split}_label"]
+        self.root_dir = root_dir
+        self.transforms = transforms
 
-def build_dataloader(train_df, val_df, root_dir, batch_size):
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        image_path = self.file_paths[index][0][0]
+        image = Image.open(os.path.join(self.root_dir, image_path))
+        if self.transforms:
+            image = self.transforms(image)
+        label = self.labels[index]
+        return image, label
+        
+
+def build_dataloader(root_dir, batch_size, train_df=None, val_df=None, data_name="PA100K"):
+        
     train_transforms = T.Compose([
-        T.RandomResizedCrop(size=(224, 224)),
+        T.Resize((224, 224)),
+        T.Pad(10),
+        T.RandomCrop((224, 224)),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -52,21 +74,35 @@ def build_dataloader(train_df, val_df, root_dir, batch_size):
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    train_dataset = ChalearnDataset(train_df, root_dir, train_transforms)
-    val_dataset = ChalearnDataset(val_df, root_dir, test_transforms)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
-    return train_loader, val_loader
+    if data_name == "upar":
+        train_dataset = ChalearnDataset(train_df, root_dir, train_transforms)
+        val_dataset = ChalearnDataset(val_df, root_dir, test_transforms)
 
-def build_test_loader(test_df, root_dir, test_batch_size):
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    elif data_name == "PA100K":
+        train_dataset = PA100KDataset(root_dir, train_transforms, "train")
+        val_dataset = PA100KDataset(root_dir, test_transforms, "val")
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    else:
+        raise NotImplementedError("Invalid dataset name!")
+    
+    return train_loader, val_loader, train_dataset, val_dataset
+
+def build_test_loader(root_dir, test_batch_size, test_df=None, data_name="PA100K"):
     test_transforms = T.Compose([
         T.Resize((224, 224)),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    test_dataset = ChalearnInferDataset(test_df, root_dir, test_transforms)
-    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=False)
+    if data_name == "upar":
+        test_dataset = ChalearnInferDataset(test_df, root_dir, test_transforms)
+        test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=False)
+    elif data_name == "PA100K":
+        test_dataset = PA100KDataset(root_dir, test_transforms, "test")
+        test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=False)
 
     return test_loader

@@ -1,4 +1,5 @@
 # DATA
+data_name: "upar"
 root_dir: "./data"
 data_path: "./data/annotations/phase1/train/train.csv"
 train_batch_size: 32
@@ -6,6 +7,10 @@ test_batch_size: 64
 
 # Training
 learning_rate: 0.0001
-num_epochs: 20
+num_epochs: 30
+num_attr: 40
+
+# Model
+backbone: swin_base_patch4_window7_224
 
 seed: 42

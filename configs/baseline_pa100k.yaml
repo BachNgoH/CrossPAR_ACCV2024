@@ -1,0 +1,21 @@
+# DATA
+data_name: "PA100K"
+root_dir: "./data/PA-100K/release_data"
+# data_path: "./data/annotations/phase1/train/train.csv"
+train_batch_size: 512
+test_batch_size: 512
+
+# Training
+learning_rate: 0.0001
+num_epochs: 30
+num_attr: 26
+
+# loss
+loss: bce_loss
+sample_weight: True
+scale: 1
+
+# Model
+backbone: vit_base_patch16_224
+
+seed: 42
