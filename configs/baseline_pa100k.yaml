@@ -16,6 +16,6 @@ sample_weight: True
 scale: 1
 
 # Model
-backbone: vit_base_patch16_224
+backbone: beitv2_base_patch16_224
 
 seed: 42

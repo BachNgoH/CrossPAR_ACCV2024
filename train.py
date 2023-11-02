@@ -3,7 +3,7 @@ from tqdm import tqdm
 import numpy as np
 from metrics import get_pedestrian_metrics
 
-def evaluate(cfg, model, val_loader, device, epoch, best_acc):
+def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
         # Validation
     model.eval()  # Set the model to evaluation mode
 
@@ -31,7 +31,7 @@ def evaluate(cfg, model, val_loader, device, epoch, best_acc):
             f'InsRecall: {val_results.instance_recall} - InsF1: {val_results.instance_f1} - mean results: {mean_results}')
         
 
-        if mean_results > best_acc:
+        if best_acc and mean_results > best_acc:
             # Save the trained model
             best_acc = mean_results
             torch.save(model.state_dict(), './checkpoint/model_best.pth')
