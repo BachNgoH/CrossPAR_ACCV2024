@@ -2,6 +2,7 @@ import torch
 from tqdm import tqdm
 import numpy as np
 from metrics import get_pedestrian_metrics
+from torch import nn
 
 def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
         # Validation
@@ -13,12 +14,30 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
     with torch.no_grad():
         for (inputs, gt_label) in val_loader:
             # Forward pass
-            gt_label = gt_label.cuda()
-            gt_list.append(gt_label.cpu().numpy())
-            
-            outputs = model(inputs.to(device))
-            probs = outputs.sigmoid()
-            preds_probs.append(probs.cpu().numpy())
+            # gt_label = gt_label.cuda()
+            # gt_list.append(gt_label.cpu().numpy())
+            if cfg["use_multi_task"]:
+                all_one_hot = []
+                for n, gt in enumerate(gt_label):
+                    one_hot_vector = torch.nn.functional.one_hot(gt, num_classes=cfg['num_per_group'][n])
+                    all_one_hot.append(one_hot_vector)
+                gt_label = torch.cat(all_one_hot, dim=1)
+                gt_list.append(gt_label.cpu().numpy())
+                outputs = model(inputs.to(device))
+                probs = []
+                for n, output in enumerate(outputs):
+                    probs.append(output.sigmoid())
+                
+                probs = torch.cat(outputs, dim=1)
+                # probs = probs.view(probs[0], -1)
+
+                preds_probs.append(probs.cpu().numpy())
+            else:
+                gt_label = gt_label.cuda()
+                gt_list.append(gt_label.cpu().numpy())
+                outputs = model(inputs.to(device))
+                probs = outputs.sigmoid()
+                preds_probs.append(probs.cpu().numpy())
             
         gt_label = np.concatenate(gt_list, axis=0)
         preds_probs = np.concatenate(preds_probs, axis=0)
@@ -41,6 +60,9 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
     # Training loop
     print("Using device:", device)
     best_acc = 0.0
+    criterion_gedge = nn.BCEWithLogitsLoss()
+
+
     for epoch in range(cfg["num_epochs"]):
         model.to(device)
         model.train()  # Set the model to training mode
@@ -52,10 +74,24 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
             optimizer.zero_grad()
             with torch.cuda.amp.autocast():
                 # Forward pass
-                outputs = model(inputs.to(device))
-                # Calculate loss
-                loss = criterion(outputs, targets.to(device).float())[0][0]
-            
+                if cfg["use_multi_task"]:
+                    # logits_list, edge_sim_list = model(inputs.to(device))
+                    logits_list = model(inputs.to(device))
+
+                    # Calculate loss
+                    loss = torch.tensor(0.).to(device)
+                    #for idx, (logits, edge_sim) in enumerate(zip(logits_list, edge_sim_list)):
+                    for idx, logits in enumerate(logits_list):
+                        #edge_gt, edge_mask = model.classifiers[idx].label2edge(targets[idx].unsqueeze(0).to(device))
+                        loss += criterion(logits, targets[idx].to(device).long())
+
+                        #loss_edge = criterion_gedge(edge_sim.masked_select(edge_mask), edge_gt.masked_select(edge_mask))
+                        #loss += loss_edge
+                else:
+                    logits = model(inputs.to(device))
+                    # Calculate loss
+                    loss = criterion(logits, targets.to(device).float())[0][0]
+
             # Backpropagation and optimization
             scaler.scale(loss).backward()
             scaler.step(optimizer)

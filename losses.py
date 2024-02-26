@@ -51,11 +51,11 @@ class BCELoss(nn.Module):
         return [loss], [loss_m]
 
 
-def build_loss(loss_type="bce_loss"):
+def build_loss(loss_type="bce_loss", sample_weight=None, scale=None, size_sum=True):
     if loss_type == "bce_loss":
-        return BCELoss
+        return BCELoss(sample_weight=sample_weight, size_sum=size_sum, scale=scale)
     if loss_type == "ce":
-        return nn.CrossEntropyLoss
+        return nn.CrossEntropyLoss()
     else:
         raise NotImplementedError
 

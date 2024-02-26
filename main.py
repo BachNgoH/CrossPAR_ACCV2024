@@ -31,17 +31,25 @@ def main(config):
         train_loader, val_loader = build_dataloader(train_df=train_df, val_df=val_df, root_dir=config["root_dir"], 
                                                     batch_size=config["train_batch_size"], data_name=config["data_name"])
     elif config["data_name"] == "PA100K":
-        train_loader, val_loader, train_set, val_set = build_dataloader(root_dir=config["root_dir"], batch_size=config["train_batch_size"], 
-                                                    data_name=config["data_name"])
+        train_loader, val_loader, train_set, val_set = build_dataloader(
+            root_dir=config["root_dir"], 
+            batch_size=config["train_batch_size"], 
+            data_name=config["data_name"],
+            use_multi_task=config["use_multi_task"])
     
-    model = PARModel(num_attributes=config["num_attr"], backbone_name=config["backbone"], pretrained=True)
+    model = PARModel(
+        num_attributes=config["num_attr"], 
+        backbone_name=config["backbone"], 
+        pretrained=True,
+        num_per_group=config["num_per_group"] if config["use_multi_task"] else None)
+    
     model.to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"])
 
     labels = train_set.labels
     label_ratio = labels.mean(0) if config["sample_weight"] else None
-    criterion = build_loss(config["loss"])(sample_weight=label_ratio, scale=config["scale"], size_sum=True)
+    criterion = build_loss(config["loss"], sample_weight=label_ratio, scale=config["scale"], size_sum=True)
     criterion = criterion.cuda()
 
     scaler = torch.cuda.amp.GradScaler()
