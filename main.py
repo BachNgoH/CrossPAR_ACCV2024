@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import random
 from dataset import build_dataloader
-from model import PARModel
+from models import PARModel
 import torch.optim as optim
 import torch.nn as nn
 from train import train
@@ -37,11 +37,7 @@ def main(config):
             data_name=config["data_name"],
             use_multi_task=config["use_multi_task"])
     
-    model = PARModel(
-        num_attributes=config["num_attr"], 
-        backbone_name=config["backbone"], 
-        pretrained=True,
-        num_per_group=config["num_per_group"] if config["use_multi_task"] else None)
+    model = PARModel(config)
     
     model.to(device)
 

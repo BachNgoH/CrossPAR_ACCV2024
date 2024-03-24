@@ -1,6 +1,6 @@
 # DATA
 data_name: "PA100K"
-root_dir: "./data/PA-100K/release_data/release_data"
+root_dir: "./data/PA-100K/release_data"
 group_index: [7,8,13,14,15,16,17,18,19,20,21,22,23,24,25,9,10,11,12,1,2,3,0,4,5,6]
 num_per_group: [2, 6, 6, 1, 4, 3, 1, 3]
 
@@ -9,10 +9,18 @@ train_batch_size: 128
 test_batch_size: 128
 
 # Training
-learning_rate: 0.0001
+learning_rate: 0.00001
 num_epochs: 30
 num_attr: 26
 use_multi_task: False
+
+## Vision Encoder
+use_beit_v2: True
+vision_config: 'configs/config_beit2_base.json'
+image_res: 224
+patch_size: 16
+embed_dim: 768
+use_mask: False
 
 # loss
 loss: bce_loss
@@ -20,6 +28,7 @@ sample_weight: True
 scale: 1
 
 # Model
-backbone: swin_base_patch4_window7_224
+backbone: x2vlm
+ckpt: /media/s24gb1/90a7e21c-edf4-4782-a0eb-731b73c521c2/Pedestrian_Attributes_Recognition/checkpoint/1b_convnext_base_imagenet_8021.th
 
 seed: 42
