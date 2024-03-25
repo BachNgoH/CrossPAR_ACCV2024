@@ -23,7 +23,7 @@ embed_dim: 768
 use_mask: False
 
 ## Fusion
-fuse_method: add # [add, concat, cross]
+fuse_method: attn # [add, concat, attn]
 
 # loss
 loss: bce_loss
