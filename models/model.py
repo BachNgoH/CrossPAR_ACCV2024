@@ -8,6 +8,10 @@ class PARModel(nn.Module):
     def __init__(self, config):
 
         super(PARModel, self).__init__()
+
+        self.backbone_name = config["backbone"]
+        self.fusion_method = config["fuse_method"]
+
         if config["backbone"] == "SOLIDER":
             self.backbone = swin_small_patch4_window7_224(img_size=(224, 224), drop_path_rate=0.1)
             self.classifier = nn.Linear(config['embed_dim'], config["num_attr"])
@@ -23,13 +27,15 @@ class PARModel(nn.Module):
 
             self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 512)
             self.adapter_2 = nn.Linear(config['embed_dim'], 512)
-            self.classifier = nn.Linear(config['embed_dim'] + self.backbone_1.num_features[-1], config['num_attr'])
-
+            if self.fusion_method == "concat":
+                self.classifier = nn.Linear(config['embed_dim'] + self.backbone_1.num_features[-1], config['num_attr'])
+            else:
+                self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
         else:
             self.backbone = timm.create_model(config["backbone"], pretrained=True, num_classes=512)        
             self.classifier = nn.Linear(config['embed_dim'], config["num_attr"])
 
-        self.backbone_name = config["backbone"]
+
 
     def forward(self, x):
         if self.backbone_name == "x2vlm":
@@ -39,7 +45,11 @@ class PARModel(nn.Module):
         elif self.backbone_name == "fusion":
             out1, _ = self.backbone_1(x)
             out2 = self.backbone_2(x)[:, 0, :]
-            out = torch.cat((out1, out2), dim=-1)
+
+            if self.fusion_method == "concat":
+                out = torch.cat((out1, out2), dim=-1)
+            else:
+                out = out1 + out2
             return self.classifier(out)
         else:
             x = self.backbone(x)

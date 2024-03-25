@@ -22,6 +22,9 @@ patch_size: 16
 embed_dim: 768
 use_mask: False
 
+## Fusion
+fuse_method: add # [add, concat, cross]
+
 # loss
 loss: bce_loss
 sample_weight: True

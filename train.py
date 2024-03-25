@@ -97,6 +97,7 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
             scaler.step(optimizer)
             scaler.update()
             total_loss += loss.item()
+            
             scheduler.step()
         print(f'Epoch [{epoch + 1}/{cfg["num_epochs"]}] Loss: {total_loss / (batch_idx + 1)}')
 
