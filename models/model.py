@@ -1,7 +1,7 @@
 import torch.nn as nn
 import timm
 import torch
-from models.swin_transformer import swin_small_patch4_window7_224
+from models.swin_transformer import swin_small_patch4_window7_224, swin_base_patch4_window7_224
 from models.x2vlm import load_pretrained_vision_tower
 
 
@@ -51,7 +51,7 @@ class PARModel(nn.Module):
 
         elif config["backbone"] == "fusion":
             res = config["image_res"]
-            self.backbone_1 = swin_small_patch4_window7_224(img_size=(res, res), drop_path_rate=0.1)
+            self.backbone_1 = swin_base_patch4_window7_224(img_size=(res, res), drop_path_rate=0.1)
             self.backbone_2 = load_pretrained_vision_tower(config["ckpt"], config)
 
 
@@ -61,7 +61,7 @@ class PARModel(nn.Module):
                 self.classifier = nn.Linear(config['embed_dim'] * 2, config['num_attr'])
 
             elif self.fusion_method == "attn":
-                self.fusion_layer = TransformerFusion(config["embed_dim"] * 2, config['embed_dim'])
+                self.fusion_layer = TransformerFusion(config["embed_dim"] + self.backbone_1.num_features[-1], config['embed_dim'])
                 self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
 
             else:

@@ -12,7 +12,7 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
     gt_list = []
 
     with torch.no_grad():
-        for (inputs, gt_label) in val_loader:
+        for (inputs, gt_label) in tqdm(val_loader, total=len(val_loader)):
             # Forward pass
             # gt_label = gt_label.cuda()
             # gt_list.append(gt_label.cpu().numpy())
@@ -49,19 +49,17 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
             f'mA: {val_results.ma:.4f} - InsAcc: {val_results.instance_acc} - InsPrec: {val_results.instance_prec} - ' \
             f'InsRecall: {val_results.instance_recall} - InsF1: {val_results.instance_f1} - mean results: {mean_results}')
         
-
-        if best_acc and mean_results > best_acc:
+        if best_acc is not None and mean_results > best_acc:
             # Save the trained model
             best_acc = mean_results
             torch.save(model.state_dict(), './checkpoint/model_best.pth')
+            print("Saving model successfully")
 
 def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
           scaler=None, scheduler=None):
     # Training loop
     print("Using device:", device)
     best_acc = 0.0
-    criterion_gedge = nn.BCEWithLogitsLoss()
-
 
     for epoch in range(cfg["num_epochs"]):
         model.to(device)

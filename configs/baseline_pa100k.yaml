@@ -9,8 +9,8 @@ train_batch_size: 64
 test_batch_size: 128
 
 # Training
-learning_rate: 0.0001
-num_epochs: 30
+learning_rate: 0.00001
+num_epochs: 3
 num_attr: 26
 use_multi_task: False
 
