@@ -55,7 +55,7 @@ def main(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, help="Path to the YAML file containing the configuration")
+    parser.add_argument("--config", default="./configs/baseline_pa100k.yaml", type=str, help="Path to the YAML file containing the configuration")
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
