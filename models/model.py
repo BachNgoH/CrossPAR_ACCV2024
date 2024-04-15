@@ -65,7 +65,8 @@ class PARModel(nn.Module):
                 self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
             elif self.fusion_method == "moe":
                 self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 768)
-                self.fusion_layer = MoEFusionHead(config["embed_dim"], config["embed_dim"] // 64, config["embed_dim"], config["num_experts"])
+                self.fusion_layer = MoEFusionHead(config["embed_dim"], config["embed_dim"] // 64, config["num_experts"])
+                self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
             else:
                 self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 512)
                 self.adapter_2 = nn.Linear(config['embed_dim'], 512)
@@ -96,7 +97,8 @@ class PARModel(nn.Module):
                 swin_shapes = swin_features[-1].shape
                 swin_features = swin_features[-1].reshape(swin_shapes[0], swin_shapes[2] ** 2, swin_shapes[1])
                 swin_features = self.adapter_1(swin_features)
-                out = self.fusion_layer(vlm_features, swin_features)
+                out, aux_loss = self.fusion_layer(vlm_features, swin_features)
+                return self.classifier(out), aux_loss
             else:
                 out = out1 + out2
             return self.classifier(out)

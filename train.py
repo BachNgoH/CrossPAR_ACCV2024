@@ -86,9 +86,13 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
                         #loss_edge = criterion_gedge(edge_sim.masked_select(edge_mask), edge_gt.masked_select(edge_mask))
                         #loss += loss_edge
                 else:
-                    logits = model(inputs.to(device))
-                    # Calculate loss
-                    loss = criterion(logits, targets.to(device).float())[0][0]
+                    if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
+                        logits, aux_loss = model(inputs.to(device))
+                        loss = criterion(logits, targets.to(device).float())[0][0] + aux_loss
+                    else:
+                        logits = model(inputs.to(device))
+                        # Calculate loss
+                        loss = criterion(logits, targets.to(device).float())[0][0]
 
             # Backpropagation and optimization
             scaler.scale(loss).backward()
