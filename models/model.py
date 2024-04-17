@@ -40,9 +40,10 @@ class PARModel(nn.Module):
 
         self.backbone_name = config["backbone"]
         self.fusion_method = config["fuse_method"]
+        self.config = config
 
         if config["backbone"] == "SOLIDER":
-            self.backbone = swin_small_patch4_window7_224(img_size=(224, 224), drop_path_rate=0.1)
+            self.backbone = swin_small_patch4_window7_224(img_size=config['image_res'], drop_path_rate=0.1)
             self.classifier = nn.Linear(config['embed_dim'], config["num_attr"])
 
         elif config["backbone"] == "x2vlm":
@@ -93,10 +94,10 @@ class PARModel(nn.Module):
             x = self.classifier(x)
             return x
         elif self.backbone_name == "fusion":
-            if self.backbone_1 == "SOLIDER":
+            if self.config["backbone_1"] == "SOLIDER":
                 out1, swin_features = self.backbone_1(x)
                 swin_shapes = swin_features[-1].shape
-                swin_features = swin_features[-1].reshape(swin_shapes[0], swin_shapes[2] ** 2, swin_shapes[1])
+                swin_features = swin_features[-1].reshape(swin_shapes[0], -1, swin_shapes[1])
                 swin_features = self.adapter_1(swin_features)
             else:
                 swin_features = self.backbone_1.forward_features(x)
@@ -104,7 +105,7 @@ class PARModel(nn.Module):
                 swin_features = swin_features.reshape(swin_shapes[0], -1, swin_shapes[3])
                 swin_features = self.adapter_1(swin_features)
             
-            if self.backbone_2 == "x2vlm":
+            if self.config["backbone_2"] == "x2vlm":
                 vlm_features = self.backbone_2(x)
                 out2 = vlm_features[:, 0, :]
             else:

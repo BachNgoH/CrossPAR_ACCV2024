@@ -216,7 +216,8 @@ class PatchEmbed(nn.Module):
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
         super().__init__()
-        img_size = to_2tuple(img_size)
+        if not isinstance(img_size, tuple):
+            img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
         self.patch_shape = (img_size[0] // patch_size[0], img_size[1] // patch_size[1])
@@ -944,6 +945,7 @@ def interpolate_pos_embed(model, checkpoint_model):
 
     # interpolate position embedding
     if ('pos_embed' in checkpoint_model) and (model.pos_embed is not None):
+        
         pos_embed_checkpoint = checkpoint_model['pos_embed']
         embedding_size = pos_embed_checkpoint.shape[-1]
         num_patches = model.patch_embed.num_patches

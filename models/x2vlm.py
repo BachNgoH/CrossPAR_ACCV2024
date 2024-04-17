@@ -143,7 +143,10 @@ def build_vision_encoder(config, load_params=False, is_masked=False):
     Args:
         load_params: False when building fine-tuning models
     """
-    num_patches = (config['image_res'] // config['patch_size']) ** 2
+    if isinstance(config["image_res"], tuple):
+        num_patches = (config["image_res"][0] // config['patch_size']) * (config["image_res"][1] // config['patch_size'])
+    else:
+        num_patches = (config['image_res'] // config['patch_size']) ** 2
 
     if config.get('use_clip_vit', False):  # good performance, but only base model available
         from models.clip_vit import CLIPVisionTransformer, interpolate_pos_embed
@@ -347,7 +350,15 @@ def load_pretrained_vision_tower(ckpt_path, config, is_eval=False):
             del state_dict[k]
 
     vision_encoder = build_vision_encoder(config)
-    vision_state_dict = interpolate_pos_embed(vision_encoder, vision_state_dict)
+    if config["use_pos_embed"]:
+        vision_state_dict = interpolate_pos_embed(vision_encoder, vision_state_dict)
+    else:
+        all_keys = list(vision_state_dict.keys())
+        for key in all_keys:
+            if "relative_position_index" in key or "relative_position_bias_table" in key:
+                vision_state_dict.pop(key)
+        if 'pos_embed' in vision_state_dict:
+            vision_state_dict.pop('pos_embed')
 
     vision_encoder.load_state_dict(vision_state_dict, strict=False)
 

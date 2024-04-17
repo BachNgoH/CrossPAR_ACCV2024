@@ -32,8 +32,9 @@ def main(config):
         train_loader, val_loader = build_dataloader(train_df=train_df, val_df=val_df, root_dir=config["root_dir"], 
                                                     batch_size=config["train_batch_size"], data_name=config["data_name"])
     elif config["data_name"] == "PA100K":
-        if isinstance(config["image_res"], str):
-            image_res = ast.literal_eval(config["image_res"])
+        if isinstance(config["image_res"], list):
+            image_res = tuple(config["image_res"])
+            config["image_res"] = image_res
         else:
             image_res = config["image_res"]
         train_loader, val_loader, train_set, val_set = build_dataloader(
