@@ -74,19 +74,19 @@ class PA100KDataset(Dataset):
         return image, label
         
 
-def build_dataloader(root_dir, batch_size, train_df=None, val_df=None, data_name="PA100K", use_multi_task=False):
-        
+def build_dataloader(image_res, root_dir, batch_size, train_df=None, val_df=None, data_name="PA100K", use_multi_task=False):
+    
     train_transforms = T.Compose([
-        T.Resize((224, 224)),
+        T.Resize(image_res),
         T.Pad(10),
-        T.RandomCrop((224, 224)),
+        T.RandomCrop(image_res),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     test_transforms = T.Compose([
-        T.Resize((224, 224)),
+        T.Resize(image_res),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
@@ -107,9 +107,9 @@ def build_dataloader(root_dir, batch_size, train_df=None, val_df=None, data_name
     
     return train_loader, val_loader, train_dataset, val_dataset
 
-def build_test_loader(root_dir, test_batch_size, test_df=None, data_name="PA100K"):
+def build_test_loader(image_res, root_dir, test_batch_size, test_df=None, data_name="PA100K"):
     test_transforms = T.Compose([
-        T.Resize((224, 224)),
+        T.Resize(image_res),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])

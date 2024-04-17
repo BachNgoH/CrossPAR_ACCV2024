@@ -51,12 +51,21 @@ class PARModel(nn.Module):
 
         elif config["backbone"] == "fusion":
             res = config["image_res"]
-            self.backbone_1 = swin_base_patch4_window7_224(img_size=(res, res), drop_path_rate=0.1)
-            self.backbone_2 = load_pretrained_vision_tower(config["ckpt"], config)
-
+            if config["backbone_1"] == "SOLIDER":
+                self.backbone_1 = swin_base_patch4_window7_224(img_size=(res, res), drop_path_rate=0.1)
+                feature_dim_1 = self.backbone_1.num_features[-1]
+            else:
+                self.backbone_1 = timm.create_model(config["backbone_1"], img_size=(256, 128), pretrained=True, num_classes=config["embed_dim"])
+                feature_dim_1 = self.backbone_1.num_features
+            if config["backbone_2"] == "x2vlm":
+                self.backbone_2 = load_pretrained_vision_tower(config["ckpt"], config)
+                feature_dim_2 = config['embed_dim']
+            else:
+                self.backbone_2 = timm.create_model(config["backbone_2"], img_size=(256, 128), num_classes=config["embed_dim"])
+                feature_dim_2 = config['embed_dim']
 
             if self.fusion_method == "concat":
-                self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 512)
+                self.adapter_1 = nn.Linear(feature_dim_1, 512)
                 self.adapter_2 = nn.Linear(config['embed_dim'], 512)
                 self.classifier = nn.Linear(config['embed_dim'] * 2, config['num_attr'])
 
@@ -64,12 +73,12 @@ class PARModel(nn.Module):
                 self.fusion_layer = TransformerFusion(config["embed_dim"] + self.backbone_1.num_features[-1], config['embed_dim'])
                 self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
             elif self.fusion_method == "moe":
-                self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 768)
+                self.adapter_1 = nn.Linear(feature_dim_1, config["embed_dim"])
                 self.fusion_layer = MoEFusionHead(config["embed_dim"], config["embed_dim"] // 64, config["num_experts"])
                 self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
             else:
-                self.adapter_1 = nn.Linear(self.backbone_1.num_features[-1], 512)
-                self.adapter_2 = nn.Linear(config['embed_dim'], 512)
+                self.adapter_1 = nn.Linear(feature_dim_1, config['embed_dim'])
+                self.adapter_2 = nn.Linear(feature_dim_2, config['embed_dim'])
                 self.classifier = nn.Linear(config['embed_dim'], config['num_attr'])
 
         else:
@@ -84,19 +93,30 @@ class PARModel(nn.Module):
             x = self.classifier(x)
             return x
         elif self.backbone_name == "fusion":
-            out1, swin_features = self.backbone_1(x)
-            vlm_features = self.backbone_2(x)
-            out2 = vlm_features[:, 0, :]
+            if self.backbone_1 == "SOLIDER":
+                out1, swin_features = self.backbone_1(x)
+                swin_shapes = swin_features[-1].shape
+                swin_features = swin_features[-1].reshape(swin_shapes[0], swin_shapes[2] ** 2, swin_shapes[1])
+                swin_features = self.adapter_1(swin_features)
+            else:
+                swin_features = self.backbone_1.forward_features(x)
+                swin_shapes = swin_features.shape
+                swin_features = swin_features.reshape(swin_shapes[0], -1, swin_shapes[3])
+                swin_features = self.adapter_1(swin_features)
+            
+            if self.backbone_2 == "x2vlm":
+                vlm_features = self.backbone_2(x)
+                out2 = vlm_features[:, 0, :]
+            else:
+                vlm_features = self.backbone_2.forward_features(x)
+                out2 = vlm_features[:, 0, :]
+
 
             if self.fusion_method == "concat":
                 out = torch.cat((out1, out2), dim=-1)
             elif self.fusion_method == "attn":
                 out = self.fusion_layer(out1, out2)
             elif self.fusion_method == "moe":
-
-                swin_shapes = swin_features[-1].shape
-                swin_features = swin_features[-1].reshape(swin_shapes[0], swin_shapes[2] ** 2, swin_shapes[1])
-                swin_features = self.adapter_1(swin_features)
                 out, aux_loss = self.fusion_layer(vlm_features, swin_features)
                 return self.classifier(out), aux_loss
             else:

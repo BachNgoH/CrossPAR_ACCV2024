@@ -35,7 +35,10 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
             else:
                 gt_label = gt_label.cuda()
                 gt_list.append(gt_label.cpu().numpy())
-                outputs = model(inputs.to(device))
+                if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
+                    outputs, _ = model(inputs.to(device))
+                else:
+                    outputs = model(inputs.to(device))
                 probs = outputs.sigmoid()
                 preds_probs.append(probs.cpu().numpy())
             
