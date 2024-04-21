@@ -51,18 +51,17 @@ class PARModel(nn.Module):
             self.classifier = nn.Linear(config['embed_dim'], config["num_attr"])
 
         elif config["backbone"] == "fusion":
-            res = config["image_res"]
             if config["backbone_1"] == "SOLIDER":
-                self.backbone_1 = swin_base_patch4_window7_224(img_size=(res, res), drop_path_rate=0.1)
+                self.backbone_1 = swin_base_patch4_window7_224(img_size=config["image_res"], drop_path_rate=0.1)
                 feature_dim_1 = self.backbone_1.num_features[-1]
             else:
-                self.backbone_1 = timm.create_model(config["backbone_1"], img_size=(256, 128), pretrained=True, num_classes=config["embed_dim"])
+                self.backbone_1 = timm.create_model(config["backbone_1"], img_size=config["image_res"], pretrained=True, num_classes=config["embed_dim"])
                 feature_dim_1 = self.backbone_1.num_features
             if config["backbone_2"] == "x2vlm":
                 self.backbone_2 = load_pretrained_vision_tower(config["ckpt"], config)
                 feature_dim_2 = config['embed_dim']
             else:
-                self.backbone_2 = timm.create_model(config["backbone_2"], img_size=(256, 128), num_classes=config["embed_dim"])
+                self.backbone_2 = timm.create_model(config["backbone_2"], img_size=config["image_res"], num_classes=config["embed_dim"])
                 feature_dim_2 = config['embed_dim']
 
             if self.fusion_method == "concat":
