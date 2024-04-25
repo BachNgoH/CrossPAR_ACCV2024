@@ -7,3 +7,9 @@ HCMUS - WR227 Project
 ```
 python3 train.py
 ```
+
+## Testing
+
+```
+python3 test.py
+```
