@@ -118,5 +118,5 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
 
         val_loss = evaluate(cfg, model, val_loader, device, criterion, epoch, best_acc)
         
-        if cfg.TRAIN.LR_SCHEDULER.TYPE == 'plateau':
+        if cfg["scheduler"] == 'plateau':
             scheduler.step(metrics=val_loss)
