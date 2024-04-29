@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import random
 from dataset import build_dataloader
+from torch.optim.lr_scheduler import ReduceLROnPlateau, MultiStepLR
 from models import PARModel
 import torch.optim as optim
 import torch.nn as nn
@@ -55,8 +56,13 @@ def main(config):
     criterion = criterion.cuda()
 
     scaler = torch.cuda.amp.GradScaler()
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["num_epochs"] * len(train_loader))
-
+    
+    if config["scheduler"] == "cosine": 
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["num_epochs"] * len(train_loader))
+    elif config["scheduler"] == "plateau":
+        scheduler = ReduceLROnPlateau(optimizer, factor=0.1, patience=4)
+    else:
+        raise NotImplementedError(f"learning rate scheduler {config["scheduler"]} not implemented!")
     train(config, model, train_loader, val_loader, optimizer, criterion, device=device, scaler=scaler, scheduler=scheduler)
 
 if __name__ == "__main__":

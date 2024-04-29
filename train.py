@@ -4,7 +4,7 @@ import numpy as np
 from metrics import get_pedestrian_metrics
 from torch import nn
 
-def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
+def evaluate(cfg, model, val_loader, device, criterion,epoch=0, best_acc=None):
         # Validation
     model.eval()  # Set the model to evaluation mode
 
@@ -36,11 +36,16 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
                 gt_label = gt_label.cuda()
                 gt_list.append(gt_label.cpu().numpy())
                 if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
-                    outputs, _ = model(inputs.to(device))
+                    outputs, aux_loss = model(inputs.to(device))
+                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0] + aux_loss
+
                 else:
                     outputs = model(inputs.to(device))
+                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0]
+
                 probs = outputs.sigmoid()
                 preds_probs.append(probs.cpu().numpy())
+                
             
         gt_label = np.concatenate(gt_list, axis=0)
         preds_probs = np.concatenate(preds_probs, axis=0)
@@ -57,6 +62,8 @@ def evaluate(cfg, model, val_loader, device, epoch=0, best_acc=None):
             best_acc = mean_results
             torch.save(model.state_dict(), './checkpoint/model_best.pth')
             print("Saving model successfully")
+            
+        return val_loss
 
 def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
           scaler=None, scheduler=None):
@@ -93,6 +100,8 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
                         logits, aux_loss = model(inputs.to(device))
                         loss = criterion(logits, targets.to(device).float())[0][0] + aux_loss
                     else:
+# The line `loss = criterion(logits, targets.to(device).float())[0][0]` is calculating the loss for
+# the current batch during training. Here's a breakdown of what each part of the line is doing:
                         logits = model(inputs.to(device))
                         # Calculate loss
                         loss = criterion(logits, targets.to(device).float())[0][0]
@@ -102,9 +111,12 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
             scaler.step(optimizer)
             scaler.update()
             total_loss += loss.item()
-            
-            scheduler.step()
+            if cfg["scheduler"] == 'cosine':
+                scheduler.step()
         print(f'Epoch [{epoch + 1}/{cfg["num_epochs"]}] Loss: {total_loss / (batch_idx + 1)}')
 
 
-        evaluate(cfg, model, val_loader, device, epoch, best_acc)
+        val_loss = evaluate(cfg, model, val_loader, device, criterion, epoch, best_acc)
+        
+        if cfg.TRAIN.LR_SCHEDULER.TYPE == 'plateau':
+            scheduler.step(metrics=val_loss)
