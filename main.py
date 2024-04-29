@@ -11,7 +11,6 @@ import torch.nn as nn
 from train import train
 import argparse
 from losses import build_loss
-import ast
 
 def set_seed(seed):
     np.random.seed(seed)
