@@ -13,12 +13,12 @@ learning_rate: 0.00001
 num_epochs: 30
 num_attr: 26
 use_multi_task: False
-scheduler: 'plateau'
+scheduler: 'cosine'
 
 ## Vision Encoder
 use_beit_v2: True
 vision_config: 'configs/config_beit2_base.json'
-image_res: [256, 256]
+image_res: [224, 224]
 patch_size: 16
 embed_dim: 768
 use_mask: False
@@ -26,7 +26,7 @@ use_pos_embed: True
 
 ## Fusion
 fuse_method: moe # [add, concat, attn, moe]
-num_experts: 12
+num_experts: 16
 
 # loss
 loss: bce_loss

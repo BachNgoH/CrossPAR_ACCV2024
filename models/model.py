@@ -117,8 +117,10 @@ class PARModel(nn.Module):
             elif self.fusion_method == "attn":
                 out = self.fusion_layer(out1, out2)
             elif self.fusion_method == "moe":
-                out, aux_loss = self.fusion_layer(vlm_features, swin_features)
-                return self.classifier(out), aux_loss
+                
+                out = self.fusion_layer(vlm_features[:, 1:, :], swin_features)
+                out = out + out2
+                return self.classifier(out)
             else:
                 out = out1 + out2
             return self.classifier(out)

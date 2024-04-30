@@ -35,13 +35,9 @@ def evaluate(cfg, model, val_loader, device, criterion,epoch=0, best_acc=None):
             else:
                 gt_label = gt_label.cuda()
                 gt_list.append(gt_label.cpu().numpy())
-                if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
-                    outputs, aux_loss = model(inputs.to(device))
-                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0] + aux_loss
-
-                else:
-                    outputs = model(inputs.to(device))
-                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0]
+                
+                outputs = model(inputs.to(device))
+                val_loss = criterion(outputs, gt_label.to(device).float())[0][0]
 
                 probs = outputs.sigmoid()
                 preds_probs.append(probs.cpu().numpy())
@@ -97,8 +93,8 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
                         #loss += loss_edge
                 else:
                     if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
-                        logits, aux_loss = model(inputs.to(device))
-                        loss = criterion(logits, targets.to(device).float())[0][0] + aux_loss
+                        logits = model(inputs.to(device))
+                        loss = criterion(logits, targets.to(device).float())[0][0]
                     else:
 # The line `loss = criterion(logits, targets.to(device).float())[0][0]` is calculating the loss for
 # the current batch during training. Here's a breakdown of what each part of the line is doing:
