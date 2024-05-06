@@ -13,14 +13,14 @@ learning_rate: 0.00001
 num_epochs: 30
 num_attr: 26
 use_multi_task: False
-scheduler: 'cosine'
+scheduler: 'plateau'
 
 ## Vision Encoder
 use_beit_v2: True
 vision_config: 'configs/config_beit2_base.json'
 image_res: [224, 224]
 patch_size: 16
-embed_dim: 768
+embed_dim: 512
 use_mask: False
 use_pos_embed: True
 
@@ -34,7 +34,7 @@ sample_weight: True
 scale: 1
 
 # Model
-backbone: fusion
+backbone: swin_base_patch4_window7_224
 ckpt: ./checkpoint/1b_convnext_base_imagenet_8021.th
 backbone_1: SOLIDER #
 backbone_2: x2vlm #
