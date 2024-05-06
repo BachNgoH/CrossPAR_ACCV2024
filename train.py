@@ -93,8 +93,8 @@ def train(cfg, model, train_loader, val_loader, optimizer, criterion, device=tor
                         #loss += loss_edge
                 else:
                     if cfg["backbone"] == "fusion" and cfg["fuse_method"] == "moe":
-                        logits = model(inputs.to(device))
-                        loss = criterion(logits, targets.to(device).float())[0][0]
+                        logits, aux_loss = model(inputs.to(device))
+                        loss = criterion(logits, targets.to(device).float())[0][0] + aux_loss
                     else:
 # The line `loss = criterion(logits, targets.to(device).float())[0][0]` is calculating the loss for
 # the current batch during training. Here's a breakdown of what each part of the line is doing:

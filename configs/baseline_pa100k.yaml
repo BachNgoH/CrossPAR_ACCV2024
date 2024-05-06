@@ -26,7 +26,8 @@ use_pos_embed: True
 
 ## Fusion
 fuse_method: moe # [add, concat, attn, moe]
-num_experts: 16
+num_experts: 4
+use_kan: True
 
 # loss
 loss: bce_loss
