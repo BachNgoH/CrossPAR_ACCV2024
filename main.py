@@ -31,7 +31,7 @@ def main(config):
         train_df, val_df = train_test_split(data_df, test_size=0.2, random_state=config["seed"], stratify=data_df["data_source"])
         train_loader, val_loader = build_dataloader(cfg=config, train_df=train_df, val_df=val_df, root_dir=config["root_dir"], 
                                                     batch_size=config["train_batch_size"], data_name=config["data_name"])
-    elif config["data_name"] == "PA100K":
+    elif config["data_name"] in ["PA100K", "PETA"]:
         if isinstance(config["image_res"], list):
             image_res = tuple(config["image_res"])
             config["image_res"] = image_res
@@ -44,6 +44,8 @@ def main(config):
             batch_size=config["train_batch_size"], 
             data_name=config["data_name"],
             use_multi_task=config["use_multi_task"])
+    else:
+        raise NotImplementedError("Invalid dataset name!")
     
     model = PARModel(config)
     

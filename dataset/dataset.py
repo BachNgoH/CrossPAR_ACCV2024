@@ -99,13 +99,15 @@ def build_dataloader(cfg, image_res, root_dir, batch_size, train_df=None, val_df
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
     elif data_name == "PA100K":
-        train_dataset = PA100KDataset(root_dir, train_transforms, "train", use_multitask=use_multi_task)
+        train_dataset = PA100KDataset(root_dir, train_transforms, "trainval", use_multitask=use_multi_task)
         val_dataset = PA100KDataset(root_dir, test_transforms, "test", use_multitask=use_multi_task)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
     elif data_name == "PETA":
         train_dataset = PedesAttrPETA(cfg, split="trainval", transform=train_transforms, target_transform=[])
         val_dataset = PedesAttrPETA(cfg, split="test", transform=test_transforms, target_transform=[])
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
     else:
         raise NotImplementedError("Invalid dataset name!")
     

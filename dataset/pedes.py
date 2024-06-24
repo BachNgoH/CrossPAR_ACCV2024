@@ -53,7 +53,7 @@ class PedesAttrPETA(data.Dataset):
         self.transform = transform
         self.target_transform = target_transform
 
-        self.root_path = f"/data3/doanhbc/upar/PETA/images/" # dataset_info.root
+        self.root_path = f"./data/PETA/images/" # dataset_info.root
 
         if self.target_transform:
             self.attr_num = len(self.target_transform)
@@ -72,24 +72,30 @@ class PedesAttrPETA(data.Dataset):
 
         self.img_num = self.img_idx.shape[0]
         self.img_id = [img_id[i] for i in self.img_idx]
-        self.label = attr_label[self.img_idx]  # [:, [0, 12]]
+        self.labels = attr_label[self.img_idx]  # [:, [0, 12]]
 
     def __getitem__(self, index):
 
-        imgname, gt_label, imgidx = self.img_id[index], self.label[index], self.img_idx[index]
+        imgname, gt_label, imgidx = self.img_id[index], self.labels[index], self.img_idx[index]
 
-        imgpath = os.path.join(self.root_path, imgname)
-        img = Image.open(imgpath)
+        try:
+            imgpath = os.path.join(self.root_path, imgname)
+            img = Image.open(imgpath)
+        
 
-        if self.transform is not None:
-            img = self.transform(img)
+            if self.transform is not None:
+                img = self.transform(img)
 
-        gt_label = gt_label.astype(np.float32)
+            gt_label = gt_label.astype(np.float32)
 
-        if self.target_transform:
-            gt_label = gt_label[self.target_transform]
+            if self.target_transform:
+                gt_label = gt_label[self.target_transform]
 
-        return img, gt_label, imgname,  # noisy_weight
+            return img, gt_label, imgname,  # noisy_weight
+        except:
+            print("ERROR:", imgname)
+
+            return None, None, None
 
     def __len__(self):
         return len(self.img_id)
