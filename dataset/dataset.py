@@ -6,6 +6,7 @@ from torchvision import transforms as T
 import scipy.io 
 from PIL import Image
 import numpy as np
+from dataset.pedes import PedesAttrPETA
 
 pa_100k_group_order = [7,8,13,14,15,16,17,18,19,20,21,22,23,24,25,9,10,11,12,1,2,3,0,4,5,6]
 pa_100k_num_in_group = [2, 6, 6, 1, 4, 3, 1, 3]
@@ -74,7 +75,7 @@ class PA100KDataset(Dataset):
         return image, label
         
 
-def build_dataloader(image_res, root_dir, batch_size, train_df=None, val_df=None, data_name="PA100K", use_multi_task=False):
+def build_dataloader(cfg, image_res, root_dir, batch_size, train_df=None, val_df=None, data_name="PA100K", use_multi_task=False):
     
     train_transforms = T.Compose([
         T.Resize(image_res),
@@ -102,6 +103,9 @@ def build_dataloader(image_res, root_dir, batch_size, train_df=None, val_df=None
         val_dataset = PA100KDataset(root_dir, test_transforms, "test", use_multitask=use_multi_task)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    elif data_name == "PETA":
+        train_dataset = PedesAttrPETA(cfg, split="trainval", transform=train_transforms, target_transform=[])
+        val_dataset = PedesAttrPETA(cfg, split="test", transform=test_transforms, target_transform=[])
     else:
         raise NotImplementedError("Invalid dataset name!")
     
