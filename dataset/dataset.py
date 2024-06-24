@@ -47,8 +47,14 @@ class ChalearnInferDataset(Dataset):
 class PA100KDataset(Dataset):
     def __init__(self, root_dir, transforms, split, use_multitask=False):
         self.annotations = scipy.io.loadmat("./data/PA-100K/annotation.mat")
-        self.file_paths = self.annotations[f"{split}_images_name"]
-        self.labels = self.annotations[f"{split}_label"]
+        
+        if split == "trainval":
+            self.file_paths = np.concatenate((self.annotations["train_images_name"], self.annotations["val_images_name"]),axis=0)
+            self.labels = np.concatenate((self.annotations["train_label"], self.annotations["val_label"]),axis=0)
+        else:
+        
+            self.file_paths = self.annotations[f"{split}_images_name"]
+            self.labels = self.annotations[f"{split}_label"]
         self.root_dir = root_dir
         self.transforms = transforms
         self.use_multitask = use_multitask
