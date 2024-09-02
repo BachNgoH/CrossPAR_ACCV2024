@@ -65,7 +65,7 @@ def main(config):
     elif config["scheduler"] == "plateau":
         scheduler = ReduceLROnPlateau(optimizer, factor=0.1, patience=4)
     else:
-        raise NotImplementedError(f"learning rate scheduler {config["scheduler"]} not implemented!")
+        raise NotImplementedError("learning rate scheduler not implemented!")
     train(config, model, train_loader, val_loader, optimizer, criterion, device=device, scaler=scaler, scheduler=scheduler)
 
 if __name__ == "__main__":

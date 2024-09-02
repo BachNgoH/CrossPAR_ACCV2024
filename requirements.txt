@@ -4,3 +4,4 @@ timm
 tqdm==4.65.2
 pandas
 opencv-python
+scikit-learn

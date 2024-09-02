@@ -1360,12 +1360,22 @@ class SwinTransformer(BaseModule):
         x = torch.flatten(x, 1)
         return x, outs
 
-def swin_base_patch4_window7_224(img_size=224,drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0., **kwargs):
+def swin_base_patch4_window7_224(img_size=224,drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0., ckpt=None, **kwargs):
     model = SwinTransformer(pretrain_img_size = img_size, patch_size=4, window_size=7, embed_dims=128, depths=(2, 2, 18, 2), num_heads=(4, 8, 16, 32), drop_path_rate=drop_path_rate, drop_rate=drop_rate, attn_drop_rate=attn_drop_rate, **kwargs)
+    
+    if ckpt is not None:
+        print("Init from ckpt:", ckpt)
+        model.init_weights(ckpt)
+        print("Init successfully")
     return model
 
-def swin_small_patch4_window7_224(img_size=224,drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0., **kwargs):
+def swin_small_patch4_window7_224(img_size=224,drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0., ckpt=None, **kwargs):
     model = SwinTransformer(pretrain_img_size = img_size, patch_size=4, window_size=7, embed_dims=96, depths=(2, 2, 18, 2), num_heads=(3, 6, 12, 24), drop_path_rate=drop_path_rate, drop_rate=drop_rate, attn_drop_rate=attn_drop_rate, **kwargs)
+    
+    if ckpt is not None:
+        print("Init from ckpt:", ckpt)
+        model.init_weights(ckpt)
+        print("Init successfully")
     return model
 
 def swin_tiny_patch4_window7_224(img_size=224,drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0., **kwargs):

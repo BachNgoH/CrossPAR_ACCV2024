@@ -22,8 +22,10 @@ class PARModel(nn.Module):
         self.config = config
 
         if config["backbone"] == "SOLIDER":
-            self.backbone = swin_small_patch4_window7_224(img_size=config['image_res'], drop_path_rate=0.1)
-            self.classifier = Linear(config['embed_dim'], config["num_attr"])
+            self.backbone = swin_base_patch4_window7_224(img_size=config['image_res'], drop_path_rate=0.1, ckpt=config["ckpt_1"])
+            feature_dim_1 = self.backbone.num_features[-1]
+
+            self.classifier = Linear(feature_dim_1, config["num_attr"])
 
         elif config["backbone"] == "x2vlm":
             self.backbone = load_pretrained_vision_tower(config["ckpt"], config)
@@ -31,7 +33,7 @@ class PARModel(nn.Module):
 
         elif config["backbone"] == "fusion":
             if config["backbone_1"] == "SOLIDER":
-                self.backbone_1 = swin_base_patch4_window7_224(img_size=config["image_res"], drop_path_rate=0.1)
+                self.backbone_1 = swin_base_patch4_window7_224(img_size=config["image_res"], drop_path_rate=0.1, ckpt=config["ckpt_1"])
                 feature_dim_1 = self.backbone_1.num_features[-1]
             else:
                 self.backbone_1 = timm.create_model(config["backbone_1"], img_size=config["image_res"], pretrained=True, num_classes=config["embed_dim"])
@@ -103,7 +105,11 @@ class PARModel(nn.Module):
             return self.classifier(out)
         
         else:
-            x = self.backbone(x)
-            x = self.classifier(x)
+            if self.config["backbone"] == "SOLIDER":
+                x, _ = self.backbone(x)
+                x = self.classifier(x)
+            else:
+                x = self.backbone(x)
+                x = self.classifier(x)
             #outputs = self.activation(x)
             return x

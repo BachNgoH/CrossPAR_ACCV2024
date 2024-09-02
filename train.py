@@ -36,8 +36,12 @@ def evaluate(cfg, model, val_loader, device, criterion,epoch=0, best_acc=None):
                 gt_label = gt_label.cuda()
                 gt_list.append(gt_label.cpu().numpy())
                 
-                outputs = model(inputs.to(device))
-                val_loss = criterion(outputs, gt_label.to(device).float())[0][0]
+                if cfg["backbone"] == "fusion":
+                    outputs, aux_loss = model(inputs.to(device))
+                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0] + aux_loss
+                else:
+                    outputs = model(inputs.to(device))
+                    val_loss = criterion(outputs, gt_label.to(device).float())[0][0]
 
                 probs = outputs.sigmoid()
                 preds_probs.append(probs.cpu().numpy())
@@ -53,7 +57,7 @@ def evaluate(cfg, model, val_loader, device, criterion,epoch=0, best_acc=None):
             f'mA: {val_results.ma:.4f} - InsAcc: {val_results.instance_acc} - InsPrec: {val_results.instance_prec} - ' \
             f'InsRecall: {val_results.instance_recall} - InsF1: {val_results.instance_f1} - mean results: {mean_results}')
         
-        if best_acc is not None and mean_results > best_acc:
+        if best_acc is not None and val_results.ma > best_acc:
             # Save the trained model
             best_acc = mean_results
             torch.save(model.state_dict(), './checkpoint/model_best.pth')
